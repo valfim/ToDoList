@@ -1,0 +1,111 @@
+Configuración de la Base de Datos
+1. Instalación de Entity Framework Core
+Entity Framework Core es utilizado para manejar la base de datos. Se instaló mediante NuGet en el proyecto:
+
+bash
+Copiar código
+dotnet add package Microsoft.EntityFrameworkCore
+dotnet add package Microsoft.EntityFrameworkCore.SqlServer
+dotnet add package Microsoft.EntityFrameworkCore.Tools
+2. Configuración del Contexto de Datos
+El contexto de datos (ApplicationDbContext) es la clase que maneja las conexiones a la base de datos y proporciona acceso a las entidades.
+
+Archivo: Data/ApplicationDbContext.cs
+
+csharp
+Copiar código
+using Microsoft.EntityFrameworkCore;
+using ToDoListAPI.Models;
+
+namespace ToDoListAPI.Data
+{
+    public class ApplicationDbContext : DbContext
+    {
+        public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
+            : base(options)
+        {
+        }
+
+        public DbSet<TodoTask> TodoTasks { get; set; }
+    }
+}
+3. Configuración de la Cadena de Conexión
+La cadena de conexión a la base de datos se configura en el archivo appsettings.json.
+
+Archivo: appsettings.json
+
+json
+Copiar código
+{
+  "ConnectionStrings": {
+    "DefaultConnection": "Server=(localdb)\\mssqllocaldb;Database=ToDoListDb;Trusted_Connection=True;MultipleActiveResultSets=true"
+  }
+}
+4. Configuración en Program.cs
+Se configura el servicio de ApplicationDbContext para que use la cadena de conexión definida.
+
+Archivo: Program.cs
+
+csharp
+Copiar código
+using Microsoft.EntityFrameworkCore;
+using ToDoListAPI.Data;
+
+var builder = WebApplication.CreateBuilder(args);
+
+// Agregar servicios al contenedor.
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+builder.Services.AddControllers();
+
+var app = builder.Build();
+
+// Configurar el pipeline de solicitudes HTTP.
+app.UseAuthorization();
+app.MapControllers();
+
+app.Run();
+5. Migraciones y Creación de la Base de Datos
+Entity Framework Core utiliza migraciones para actualizar la base de datos en función de los cambios en el modelo de datos. Los pasos para gestionar las migraciones son los siguientes:
+
+Agregar una Nueva Migración:
+
+Este comando crea una migración basada en los cambios realizados en el modelo de datos.
+
+bash
+Copiar código
+dotnet ef migrations add InitialCreate
+Actualizar la Base de Datos:
+
+Aplica la migración a la base de datos para que la estructura coincida con el modelo de datos.
+
+bash
+Copiar código
+dotnet ef database update
+6. Estructura de la Tabla
+La entidad TodoTask define la estructura de la tabla en la base de datos.
+
+Archivo: Models/TodoTask.cs
+
+csharp
+Copiar código
+using System;
+using System.ComponentModel.DataAnnotations;
+
+namespace ToDoListAPI.Models
+{
+    public class TodoTask
+    {
+        [Key]
+        public Guid Id { get; set; }
+
+        [Required]
+        public string Title { get; set; }
+
+        public string Description { get; set; }
+
+        public bool IsCompleted { get; set; }
+
+        public DateTime CreatedAt { get; set; }
+    }
